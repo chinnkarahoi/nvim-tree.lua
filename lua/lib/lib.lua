@@ -272,7 +272,7 @@ local function create_buf()
 end
 
 local function create_win()
-  api.nvim_command("vsplit")
+  api.nvim_command("topleft split")
   api.nvim_command("wincmd "..window_opts.side)
   api.nvim_command("vertical resize "..M.Tree.win_width)
 end
