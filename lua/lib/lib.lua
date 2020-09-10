@@ -226,7 +226,7 @@ local function set_mappings()
     ['<2-RightMouse>'] = 'on_keypress("cd")';
     [bindings.cd] = 'on_keypress("cd")';
     [bindings.edit] = 'on_keypress("edit")';
-    [bindings.edit_vsplit] = 'on_keypress("vsplit")';
+    [bindings.edit_vsplit] = 'on_keypress("Split")';
     [bindings.edit_split] = 'on_keypress("split")';
     [bindings.edit_tab] = 'on_keypress("tabnew")';
     [bindings.toggle_ignored] = 'on_keypress("toggle_ignored")';
