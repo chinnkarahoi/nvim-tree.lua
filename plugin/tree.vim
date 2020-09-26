@@ -15,7 +15,6 @@ augroup LuaTree
     au WinClosed * lua require'tree'.on_leave()
   endif
   au VimEnter * lua require'tree'.on_enter()
-  au ColorScheme * lua require'tree'.reset_highlight()
   au User FugitiveChanged lua require'tree'.refresh()
   if get(g:, 'lua_tree_tab_open') == 1
     au TabEnter * lua require'tree'.tab_change()
