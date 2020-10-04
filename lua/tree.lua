@@ -80,7 +80,7 @@ function M.on_keypress(mode)
     return keypress_funcs[mode](node)
   end
 
-  if node.name == ".." then
+  if node.name == ".."  or mode == 'up' then
     return lib.change_dir("..")
   elseif mode == "cd" and node.entries ~= nil then
     return lib.change_dir(node.absolute_path)

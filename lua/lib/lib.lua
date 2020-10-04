@@ -203,6 +203,14 @@ end
 
 function M.change_dir(foldername)
   -- api.nvim_command('cd '..foldername)
+  if foldername == '..' then
+    foldername = M.Tree.cwd:match("(.*[/\\])")
+  end
+  if foldername:sub(-1) == "/" then
+    if foldername ~= "/" then
+      foldername=foldername:sub(1, -2)
+    end
+  end
   M.Tree.entries = {}
   M.init(false, M.Tree.bufnr ~= nil, foldername)
 end
@@ -224,6 +232,7 @@ local function set_mappings()
   local mappings = {
     ['<2-LeftMouse>'] = 'on_keypress("edit")';
     ['<2-RightMouse>'] = 'on_keypress("cd")';
+    [bindings.up] = 'on_keypress("up")';
     [bindings.cd] = 'on_keypress("cd")';
     [bindings.edit] = 'on_keypress("edit")';
     [bindings.edit_vsplit] = 'on_keypress("Split")';

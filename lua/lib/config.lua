@@ -59,6 +59,7 @@ function M.get_bindings()
     toggle_ignored  = keybindings.toggle_ignored or 'I',
     toggle_dotfiles = keybindings.toggle_dotfiles or 'H',
     refresh         = keybindings.refresh or 'R',
+    up              = keybindings.up or ',',
     cd              = keybindings.cd or '<C-]>',
     create          = keybindings.create or 'a',
     remove          = keybindings.remove or 'd',
