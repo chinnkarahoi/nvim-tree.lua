@@ -261,6 +261,7 @@ local M = {}
 
 function M.draw(tree, reload)
   if not tree.bufnr then return end
+  if not api.nvim_buf_is_valid(tree.bufnr) then return end
   api.nvim_buf_set_option(tree.bufnr, 'modifiable', true)
   local cursor = api.nvim_win_get_cursor(tree.winnr)
   if reload then

@@ -21,7 +21,7 @@ augroup LuaTree
   endif
 augroup end
 
-command! LuaTreeOpen lua require'tree'.open()
+command! -nargs=* LuaTreeOpen lua require'tree'.open(<q-args>)
 command! LuaTreeClose lua require'tree'.close()
 command! LuaTreeToggle lua require'tree'.toggle()
 command! LuaTreeRefresh lua require'tree'.refresh()

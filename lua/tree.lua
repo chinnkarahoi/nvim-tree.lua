@@ -28,9 +28,9 @@ function M.close()
   end
 end
 
-function M.open()
+function M.open(path)
   if not lib.win_open() then
-    lib.open()
+    lib.open(path)
   end
 end
 

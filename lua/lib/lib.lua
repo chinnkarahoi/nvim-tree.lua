@@ -40,8 +40,8 @@ M.Tree = {
   }
 }
 
-function M.init(with_open, with_render)
-  M.Tree.cwd = luv.cwd()
+function M.init(with_open, with_render, path)
+  M.Tree.cwd = path or luv.cwd()
   populate(M.Tree.entries, M.Tree.cwd, M.Tree)
 
   local stat = luv.fs_stat(M.Tree.cwd)
@@ -202,9 +202,9 @@ function M.open_file(mode, filename)
 end
 
 function M.change_dir(foldername)
-  api.nvim_command('cd '..foldername)
+  -- api.nvim_command('cd '..foldername)
   M.Tree.entries = {}
-  M.init(false, M.Tree.bufnr ~= nil)
+  M.init(false, M.Tree.bufnr ~= nil, foldername)
 end
 
 local function set_mapping(buf, key, fn)
@@ -285,7 +285,10 @@ function M.close()
   M.Tree.bufnr = nil
 end
 
-function M.open()
+function M.open(path)
+  if path then
+    M.change_dir(path)
+  end
   create_buf()
   create_win()
   api.nvim_win_set_buf(M.Tree.winnr(), M.Tree.bufnr)
