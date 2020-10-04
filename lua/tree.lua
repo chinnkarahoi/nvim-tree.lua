@@ -128,9 +128,11 @@ local function is_file_readable(fname)
   return true
 end
 
-function M.find_file(with_open)
-  local bufname = vim.fn.bufname()
-  local filepath = vim.fn.fnamemodify(bufname, ':p')
+function M.find_file(with_open, filepath)
+  if filepath == '' or filepath == nil then
+    filepath = vim.fn.bufname()
+  end
+  filepath = vim.fn.fnamemodify(filepath, ':p')
   if not is_file_readable(filepath) then return end
 
   if with_open then
