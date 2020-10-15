@@ -78,7 +78,7 @@ function M.get_node_at_cursor()
   local cursor = api.nvim_win_get_cursor(M.Tree.winnr())
   local line = cursor[1]
   if line == 1 and M.Tree.cwd ~= "/" then
-    return { name = ".." }
+    return { name = M.Tree.cwd }
   end
 
   if M.Tree.cwd == "/" then

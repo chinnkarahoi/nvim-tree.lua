@@ -43,7 +43,9 @@ function M.create(node)
   if node.name == '..' then return end
 
   local add_into
-  if node.entries ~= nil then
+  if node.absolute_path == nil then
+    add_into = node.name..'/'
+  elseif node.entries ~= nil then
     add_into = node.absolute_path..'/'
   else
     add_into = node.absolute_path:sub(0, -(#node.name + 1))
