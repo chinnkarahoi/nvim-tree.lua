@@ -78,6 +78,10 @@ if vim.g.lua_tree_git_hl == 1 then
       { hl = "LuaTreeFileStaged" },
       { hl = "LuaTreeFileNew" }
     },
+    ["AD"] = {
+      { hl = "LuaTreeFileStaged" },
+      { hl = "LuaTreeFileDeleted" } 
+    },
     ["AM"] = {
       { hl = "LuaTreeFileStaged" },
       { hl = "LuaTreeFileNew" },
@@ -87,6 +91,10 @@ if vim.g.lua_tree_git_hl == 1 then
     ["R "] = { { hl = "LuaTreeFileRenamed" } },
     ["UU"] = { { hl = "LuaTreeFileMerge" } },
     [" D"] = { { hl = "LuaTreeFileDeleted" } },
+    ["D "] = {
+      { hl = "LuaTreeFileDeleted" },
+      { hl = "LuaTreeFileStaged" }
+    },
     dirty = { { hl = "LuaTreeFileDirty" } },
   }
   get_git_hl = function(node)
@@ -273,7 +281,7 @@ function M.draw(tree, reload)
 
   api.nvim_buf_set_lines(tree.bufnr, 0, -1, false, lines)
   M.render_hl(tree.bufnr)
-  if #lines > cursor[1] then
+  if #lines >= cursor[1] then
     api.nvim_win_set_cursor(tree.winnr, cursor)
   end
   api.nvim_buf_set_option(tree.bufnr, 'modifiable', false)

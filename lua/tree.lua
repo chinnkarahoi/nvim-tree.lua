@@ -139,6 +139,8 @@ function M.find_file(with_open, filepath)
     M.open()
     lib.win_focus()
   end
+
+  if not is_file_readable(filepath) then return end
   lib.set_index_and_redraw(filepath)
 end
 
