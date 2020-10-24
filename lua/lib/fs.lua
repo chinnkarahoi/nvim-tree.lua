@@ -188,7 +188,7 @@ local function do_paste(node, action_type, action_fn)
     msg = clip[1].absolute_path
   end
 
-  local ans = vim.fn.input(action_type..' '..msg..' to '..destination..'? y/n: ')
+  local ans = 'y'
   clear_prompt()
   if not ans:match('^y') then
     return api.nvim_out_write('Canceled.\n')
@@ -219,7 +219,7 @@ end
 function M.remove(node)
   if node.name == '..' then return end
 
-  local ans = vim.fn.input("Remove " ..node.name.. " ? y/n: ")
+  local ans = 'y'
   clear_prompt()
   if ans:match('^y') then
     if node.entries ~= nil then
