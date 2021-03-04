@@ -63,8 +63,8 @@ function M.get_bindings()
     ["<2-LeftMouse>"]  = get_lua_cb("edit"),
     ["<2-RightMouse>"] = get_lua_cb("cd"),
     ["<C-]>"]          = get_lua_cb("cd"),
-    ["<C-v>"]          = get_lua_cb("vsplit"),
-    ["<C-x>"]          = get_lua_cb("split"),
+    ["<C-v>"]          = get_lua_cb("Split"),
+    ["<C-x>"]          = get_lua_cb("Split"),
     ["<C-t>"]          = get_lua_cb("tabnew"),
     ["<BS>"]           = get_lua_cb("close_node"),
     ["<S-CR>"]         = get_lua_cb("close_node"),
@@ -93,7 +93,7 @@ function M.window_options()
     opts.side = 'L'
     opts.open_command = 'h'
     opts.preview_command = 'l'
-    opts.split_command = 'nosplitright'
+    opts.split_command = 'splitright'
   else
     opts.side = 'H'
     opts.open_command = 'l'

@@ -193,12 +193,6 @@ function M.open_file(mode, filename)
   api.nvim_command('noautocmd wincmd '..window_opts.open_command)
 
   local found = false
-  for _, win in ipairs(api.nvim_list_wins()) do
-    if filename == api.nvim_buf_get_name(api.nvim_win_get_buf(win)) then
-      found = true
-      ecmd = function() M.win_focus(win) end
-    end
-  end
 
   if not found and (mode == 'edit' or mode == 'preview') then
     if target_bufnr then
