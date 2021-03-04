@@ -37,6 +37,7 @@ function M.open(cb)
         lib.set_target_win()
       end
       pcall(cb)
+      vim.api.nvim_command('normal zz')
     end
   )
 end
