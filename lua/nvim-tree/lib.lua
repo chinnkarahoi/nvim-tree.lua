@@ -274,9 +274,7 @@ local function create_buf()
 end
 
 local function create_win()
-  api.nvim_command("vsplit")
-  api.nvim_command("wincmd "..window_opts.side)
-  api.nvim_command("vertical resize "..M.Tree.win_width)
+  api.nvim_command("split")
 end
 
 function M.close()
@@ -288,7 +286,7 @@ function M.close()
 end
 
 function M.set_target_win()
-  M.Tree.target_winid = vim.fn.win_getid(vim.fn.bufwinnr(api.nvim_get_current_buf()))
+  M.Tree.target_winid = api.nvim_get_current_win()
 end
 
 function M.open()
