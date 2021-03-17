@@ -128,7 +128,7 @@ function M.refresh_tree()
 
       refresh_nodes(M.Tree)
 
-      if config.get_icon_state().show_git_icon or vim.g.nvim_tree_git_hl then
+      if config.get_icon_state().show_git_icon or vim.g.nvim_tree_git_hl == 1 then
         git.reload_roots()
         refresh_git(M.Tree)
       end
@@ -350,6 +350,13 @@ end
 
 function M.win_focus(winnr)
   local wnr = winnr or M.Tree.winnr()
+
+  if vim.api.nvim_win_get_tabpage(wnr) ~= vim.api.nvim_win_get_tabpage(0) then
+    M.close()
+    M.open()
+    wnr = M.Tree.winnr()
+  end
+
   api.nvim_set_current_win(wnr)
 end
 
