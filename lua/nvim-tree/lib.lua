@@ -274,7 +274,7 @@ local function create_buf()
 end
 
 local function create_win()
-  api.nvim_command("split")
+  api.nvim_command("topleft split")
 end
 
 function M.close()
