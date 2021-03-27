@@ -214,6 +214,10 @@ function M.open_file(mode, filename)
     end
   end
 
+  if vim.g.nvim_tree_quit_on_open == 1 and mode ~= 'preview' then
+    M.close()
+  end
+
   if type(ecmd) == 'string' then
     api.nvim_command(string.format('%s %s', ecmd, vim.fn.fnameescape(filename)))
   else
@@ -235,9 +239,6 @@ function M.open_file(mode, filename)
     M.win_focus()
     api.nvim_command('vertical resize '..M.Tree.win_width)
     M.win_focus(cur_win)
-  end
-  if vim.g.nvim_tree_quit_on_open == 1 and mode ~= 'preview' then
-    M.close()
   end
 end
 
