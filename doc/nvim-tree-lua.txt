@@ -1,6 +1,6 @@
 *nvim-tree.lua* A file explorer written in lua
 
-Minimum version of neovim: 0.4.0
+Minimum version of neovim: 0.5.0
 
 Author: Yazdani Kiyan <yazdani.kiyan@protonmail.com>
 
@@ -68,6 +68,16 @@ useful to hide large data/cache folders.
 >
     example: let g:nvim_tree_ignore = [ '.git', 'node_modules' ]
 
+|g:nvim_tree_gitignore|				*g:nvim_tree_gitignore*
+
+Determines whether to include in g:nvim_tree_ignore
+files ignored by git.
+
+Must be:
+    0: not ignored
+    1: ignored files from `git ls-files --others --ignored --exclude-standard --directory`
+
+>
 |g:nvim_tree_show_icons|			        *g:nvim_tree_show_icons*
 
 Dictionary, if your terminal or font doesn't support certain unicode
@@ -95,21 +105,23 @@ You can set icons for:
 - Symlinks. If an icon is not provided, the `default` icon is used.
 >
   let g:nvim_tree_icons = {
-      \ 'default':      '',
-      \ 'symlink':      '',
+      \ 'default':        '',
+      \ 'symlink':        '',
       \ 'git': {
-      \   'unstaged':   "✗",
-      \   'staged':     "✓",
-      \   'unmerged':   "",
-      \   'renamed':    "➜",
-      \   'untracked':  "★"
-      \   },
+      \   'unstaged':     "✗",
+      \   'staged':       "✓",
+      \   'unmerged':     "",
+      \   'renamed':      "➜",
+      \   'untracked':    "★"
+      \   'deleted':      ""
+      \  },
       \ 'folder': {
-      \   'default':    "",
-      \   'open':       "",
-      \   'empty':      "",
-      \   'empty_open': "",
-      \   'symlink':    "",
+      \   'default':      "",
+      \   'open':         "",
+      \   'empty':        "",
+      \   'empty_open':   "",
+      \   'symlink':      "",
+      \   'symlink_open': "",
       \  }
       \ }
 
@@ -208,6 +220,12 @@ Can be 0 or 1. When 1, appends a trailing slash to folder names.
 Can be 0 or 1. When 1, folders that contain only one folder are grouped
 together. 0 by default.
 
+|g:nvim_tree_lsp_diagnostics|         *g:nvim_tree_lsp_diagnostics*
+
+Can be 0 or 1. When 1, will show nvim-lsp diagnostics in the tree
+by highlighting filenames with `NvimTreeLspDiagnostics`.
+Code will be executed on `BufWritePost`. 0 by default.
+
 ==============================================================================
 INFORMATIONS				        *nvim-tree-info*
 
@@ -217,6 +235,7 @@ INFORMATIONS				        *nvim-tree-info*
 - '<CR>' on '..' will cd in the above directory
 - typing '<C-]>' will cd in the directory under the cursor
 - typing '<BS>' will close current opened directory or parent
+- typing 'P' will move cursor to the parent directory
 
 - type 'a' to add a file
 - type 'r' to rename a file
@@ -229,6 +248,10 @@ INFORMATIONS				        *nvim-tree-info*
 - type ']c' to go to next git item
 - type '[c' to go to prev git item
 - type '-' to navigate up one directory
+- type '<' to navigate to the previous sibling of current file/directory
+- type '>' to navigate to the next sibling of current file/directory
+- type 'J' to navigate to the first sibling of current file/directory
+- type 'K' to navigate to the last sibling of current file/directory
 
 - if the file is a directory, '<CR>' will open the directory
 - otherwise it will open the file in the buffer near the tree
@@ -268,9 +291,14 @@ Default keybindings can be overriden. You can also define your own keymappings f
 	  ["<C-v>"]          = tree_cb("vsplit"),
 	  ["<C-x>"]          = tree_cb("split"),
 	  ["<C-t>"]          = tree_cb("tabnew"),
+	  ["<"]              = tree_cb("prev_sibling"),
+	  [">"]              = tree_cb("next_sibling"),
+	  ["P"]              = tree_cb("parent_node"),
 	  ["<BS>"]           = tree_cb("close_node"),
 	  ["<S-CR>"]         = tree_cb("close_node"),
 	  ["<Tab>"]          = tree_cb("preview"),
+	  ["K"]              = tree_cb("first_sibling"),
+	  ["J"]              = tree_cb("last_sibling"),
 	  ["I"]              = tree_cb("toggle_ignored"),
 	  ["H"]              = tree_cb("toggle_dotfiles"),
 	  ["R"]              = tree_cb("refresh"),
@@ -338,6 +366,7 @@ NvimTreeSpecialFile
 NvimTreeImageFile
 NvimTreeMarkdownFile
 NvimTreeIndentMarker
+NvimTreeLspDiagnostics
 
 NvimTreeLicenseIcon
 NvimTreeYamlIcon
@@ -361,6 +390,7 @@ NvimTreeGitStaged
 NvimTreeGitMerge
 NvimTreeGitRenamed
 NvimTreeGitNew
+NvimTreeGitDeleted
 
 There are also links to normal bindings to style the tree itself.
 
@@ -376,7 +406,80 @@ These all link to there Git equivalent
 NvimTreeFileDirty
 NvimTreeFileStaged
 NvimTreeFileMerge
-NvimTreeFileNew
 NvimTreeFileRenamed
+NvimTreeFileNew
+NvimTreeFileDeleted
 
  vim:tw=78:ts=8:noet:ft=help:norl:
+
+==============================================================================
+EVENTS                                                 *nvim-tree-events*
+
+|nvim_tree_events|                                     *nvim_tree_events*
+
+nvim-tree will dispatch events whenever an action is made. These events can be
+subscribed to through handler functions. This allows for even further
+customization of nvim-tree.
+
+A handler for an event is just a function which receives one argument -
+the payload of the event. The payload is different for each event type. Refer
+to |nvim_tree_registering_handlers| for more information.
+<
+
+|nvim_tree_registering_handlers|                *nvim_tree_registering_handlers*
+
+Handlers are registered by calling the `on_*` functions available in the
+`require('nvim-tree.events')` module. See |nvim-tree.events|.
+
+
+For example, registering a handler for when a node is renamed is done like this: >
+
+    local events = require('nvim-tree.events')
+
+    events.on_node_renamed(function(data)
+        print("Node renamed from " .. data.old_name .. " to " ..  data.new_name)
+    end)
+
+==============================================================================
+Lua module: nvim-tree.events                           *nvim-tree.events*
+
+                                     *nvim-tree.events.on_node_renamed()*
+on_node_renamed({handler})
+                Registers a handler for when a node is renamed.
+                • Note: A node can either be a file or a directory.
+
+                Parameters: ~
+                    {handler}    (function) Handler function, with the
+                                 signature `function(payload)`.
+
+                                     *nvim-tree.events.on_file_created()*
+on_file_created({handler})
+                Registers a handler for when a file is created.
+
+                Parameters: ~
+                    {handler}    (function) Handler function, with the
+                                 signature `function(payload)`.
+
+                                     *nvim-tree.events.on_file_removed()*
+on_file_removed({handler})
+                Registers a handler for when a file is removed.
+
+                Parameters: ~
+                    {handler}    (function) Handler function, with the
+                                 signature `function(payload)`.
+
+                                   *nvim-tree.events.on_folder_created()*
+on_folder_created({handler})
+                Registers a handler for when a folder is created.
+
+                Parameters: ~
+                    {handler}    (function) Handler function, with the
+                                 signature `function(payload)`.
+
+                                   *nvim-tree.events.on_folder_removed()*
+on_folder_removed({handler})
+                Registers a handler for when a folder is removed.
+
+                Parameters: ~
+                    {handler}    (function) Handler function, with the
+                                 signature `function(payload)`.

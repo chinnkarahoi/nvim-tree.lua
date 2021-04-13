@@ -11,7 +11,8 @@ function M.get_icon_state()
       unmerged = "",
       renamed = "➜",
       untracked = "★",
-      deleted = ""
+      deleted = "",
+      ignored = "◌"
     },
     folder_icons = {
       default = "",
@@ -67,9 +68,14 @@ function M.get_bindings()
     ["<C-v>"]          = M.nvim_tree_callback("Split"),
     ["<C-x>"]          = M.nvim_tree_callback("Split"),
     ["<C-t>"]          = M.nvim_tree_callback("tabnew"),
+    ["<"]              = M.nvim_tree_callback("prev_sibling"),
+    [">"]              = M.nvim_tree_callback("next_sibling"),
+    ["P"]              = M.nvim_tree_callback("parent_node"),
     ["<BS>"]           = M.nvim_tree_callback("close_node"),
     ["<S-CR>"]         = M.nvim_tree_callback("close_node"),
     ["<Tab>"]          = M.nvim_tree_callback("preview"),
+    ["K"]              = M.nvim_tree_callback("first_sibling"),
+    ["J"]              = M.nvim_tree_callback("last_sibling"),
     ["I"]              = M.nvim_tree_callback("toggle_ignored"),
     ["H"]              = M.nvim_tree_callback("toggle_dotfiles"),
     ["R"]              = M.nvim_tree_callback("refresh"),

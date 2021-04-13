@@ -9,7 +9,7 @@ This plugin requires [neovim nightly (>=0.5.0)](https://github.com/neovim/neovim
 Install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```vim
-" requires 
+" requires
 Plug 'kyazdani42/nvim-web-devicons' " for file icons
 Plug 'kyazdani42/nvim-tree.lua'
 ```
@@ -17,12 +17,13 @@ Plug 'kyazdani42/nvim-tree.lua'
 ## Setup
 
 ```vim
-let g:nvim_tree_side = 'right' | 'left' "left by default
+let g:nvim_tree_side = 'right' "left by default
 let g:nvim_tree_width = 40 "30 by default
 let g:nvim_tree_ignore = [ '.git', 'node_modules', '.cache' ] "empty by default
+let g:nvim_tree_gitignore = 1 "0 by default
 let g:nvim_tree_auto_open = 1 "0 by default, opens the tree when typing `vim $DIR` or `vim`
 let g:nvim_tree_auto_close = 1 "0 by default, closes the tree when it's the last window
-let g:nvim_tree_auto_ignore_ft = {'startify', 'dashboard'} "empty by default, don't auto open tree on specific filetypes.
+let g:nvim_tree_auto_ignore_ft = [ 'startify', 'dashboard' ] "empty by default, don't auto open tree on specific filetypes.
 let g:nvim_tree_quit_on_open = 1 "0 by default, closes the tree when you open a file
 let g:nvim_tree_follow = 1 "0 by default, this option allows the cursor to be updated when entering a buffer
 let g:nvim_tree_indent_markers = 1 "0 by default, this option shows indent markers when folders are open
@@ -35,6 +36,7 @@ let g:nvim_tree_disable_netrw = 0 "1 by default, disables netrw
 let g:nvim_tree_hijack_netrw = 0 "1 by default, prevents netrw from automatically opening when opening directories (but lets you keep its other utilities)
 let g:nvim_tree_add_trailing = 1 "0 by default, append a trailing slash to folder names
 let g:nvim_tree_group_empty = 1 " 0 by default, compact folders that only contain a single folder into one node in the file tree
+let g:nvim_tree_lsp_diagnostics = 1 "0 by default, will show lsp diagnostics in the tree. See :help nvim_tree_lsp_diagnostics
 let g:nvim_tree_show_icons = {
     \ 'git': 1,
     \ 'folders': 0,
@@ -54,7 +56,9 @@ let g:nvim_tree_icons = {
     \   'staged': "✓",
     \   'unmerged': "",
     \   'renamed': "➜",
-    \   'untracked': "★"
+    \   'untracked': "★",
+    \   'deleted': "",
+    \   'ignored': "◌"
     \   },
     \ 'folder': {
     \   'default': "",
@@ -134,6 +138,8 @@ lua <<EOF
       ["<C-v>"]          = tree_cb("vsplit"),
       ["<C-x>"]          = tree_cb("split"),
       ["<C-t>"]          = tree_cb("tabnew"),
+      ["<"]              = tree_cb("prev_sibling"),
+      [">"]              = tree_cb("next_sibling"),
       ["<BS>"]           = tree_cb("close_node"),
       ["<S-CR>"]         = tree_cb("close_node"),
       ["<Tab>"]          = tree_cb("preview"),
@@ -168,6 +174,7 @@ This plugin is very fast because it uses the `libuv` `scandir` and `scandir_next
 - Change directory with `.`
 - Add / Rename / delete files
 - Git integration (icons and file highlight)
+- Lsp diagnostics integration (file highlight)
 - Indent markers
 - Mouse support
 - It's fast

@@ -46,6 +46,8 @@ M.Tree = {
 
 function M.init(with_open, with_render)
   M.Tree.cwd = luv.cwd()
+  git.git_root(M.Tree.cwd)
+  git.update_gitignore_map_sync()
   populate(M.Tree.entries, M.Tree.cwd)
 
   local stat = luv.fs_stat(M.Tree.cwd)
@@ -72,6 +74,30 @@ local function get_node_at_line(line)
       if node.open == true then
         local child = iter(node.entries)
         if child ~= nil then return child end
+      end
+    end
+  end
+  return iter
+end
+
+local function get_line_from_node(node, find_parent)
+  local node_path = node.absolute_path
+
+  if find_parent then
+    node_path = node.absolute_path:match("(.*)"..utils.path_separator)
+  end
+
+  local line = 2
+  local function iter(entries, recursive)
+    for _, entry in ipairs(entries) do
+      if node_path:match('^'..entry.match_path..'$') ~= nil then
+        return line, entry
+      end
+
+      line = line + 1
+      if entry.open == true and recursive then
+        local _, child = iter(entry.entries, recursive)
+        if child ~= nil then return line, child end
       end
     end
   end
@@ -106,16 +132,22 @@ function M.unroll_dir(node)
   if #node.entries > 0 then
     renderer.draw(M.Tree, true)
   else
+    git.git_root(node.absolute_path)
+    git.update_gitignore_map_sync()
     populate(node.entries, node.link_to or node.absolute_path, node)
     renderer.draw(M.Tree, true)
   end
 end
 
-local function refresh_git(node)
-  git.update_status(node.entries, node.absolute_path or node.cwd)
+local function refresh_git(node, update_gitignore)
+  if not node then node = M.Tree end
+  if update_gitignore == nil or update_gitignore == true then
+    git.update_gitignore_map_sync()
+  end
+  git.update_status(node.entries, node.absolute_path or node.cwd, node)
   for _, entry in pairs(node.entries) do
-    if entry.entries ~= nil then
-      refresh_git(entry)
+    if entry.entries and #entry.entries > 0 then
+      refresh_git(entry, false)
     end
   end
 end
@@ -131,22 +163,19 @@ local function refresh_nodes(node)
 end
 
 function M.refresh_tree()
-  vim.schedule(
-    function ()
-      if vim.v.exiting ~= nil then return end
+  if vim.v.exiting ~= nil then return end
 
-      refresh_nodes(M.Tree)
+  refresh_nodes(M.Tree)
 
-      if config.get_icon_state().show_git_icon or vim.g.nvim_tree_git_hl == 1 then
-        git.reload_roots()
-        refresh_git(M.Tree)
-      end
-      if M.win_open() then
-        renderer.draw(M.Tree, true)
-      else
-        M.Tree.loaded = false
-      end
-    end)
+  if config.get_icon_state().show_git_icon or vim.g.nvim_tree_git_hl == 1 then
+    git.reload_roots()
+    refresh_git(M.Tree)
+  end
+  if M.win_open() then
+    renderer.draw(M.Tree, true)
+  else
+    M.Tree.loaded = false
+  end
 end
 
 function M.set_index_and_redraw(fname)
@@ -165,7 +194,7 @@ function M.set_index_and_redraw(fname)
         return i
       end
 
-      if fname:match(entry.match_path..'/') ~= nil then
+      if fname:match(entry.match_path..utils.path_separator) ~= nil then
         if #entry.entries == 0 then
           reload = true
           populate(entry.entries, entry.absolute_path, entry)
@@ -243,6 +272,10 @@ function M.open_file(mode, filename)
 end
 
 function M.change_dir(foldername)
+  if vim.fn.expand(foldername) == M.Tree.cwd then
+    return
+  end
+
   api.nvim_command('cd '..foldername)
   M.Tree.entries = {}
   M.init(false, M.Tree.bufnr ~= nil)
@@ -269,13 +302,13 @@ end
 
 local function create_buf()
   local options = {
-    bufhidden = 'wipe';
     buftype = 'nofile';
     modifiable = false;
   }
 
   M.Tree.bufnr = api.nvim_create_buf(false, true)
   api.nvim_buf_set_name(M.Tree.bufnr, M.Tree.buf_name)
+  api.nvim_buf_set_var(M.Tree.bufnr, "nvim_tree_buffer_ready", 1)
 
   for opt, val in pairs(options) do
     api.nvim_buf_set_option(M.Tree.bufnr, opt, val)
@@ -292,7 +325,6 @@ function M.close()
     return vim.cmd ':q!'
   end
   api.nvim_win_close(M.Tree.winnr(), true)
-  M.Tree.bufnr = nil
 end
 
 function M.set_target_win()
@@ -301,7 +333,11 @@ end
 
 function M.open()
   M.set_target_win()
-  create_buf()
+
+  if not M.buf_exists() then
+    create_buf()
+  end
+
   create_win()
   api.nvim_win_set_buf(M.Tree.winnr(), M.Tree.bufnr)
 
@@ -319,37 +355,65 @@ function M.open()
   api.nvim_command('setlocal '..window_opts.split_command)
 end
 
-function M.close_node(node)
-  if node.name == '..' then return end
+function M.sibling(node, direction)
+  if not direction then return end
 
-  local sep = package.config:sub(1,1)
-  local dname = node.absolute_path:match("(.*"..sep..")")
-  local index = 2
+  local iter = get_line_from_node(node, true)
+  local node_path = node.absolute_path
 
-  local function iter(entries)
-    for _, entry in ipairs(entries) do
-      if dname:match('^'..entry.match_path..sep..'$') ~= nil then
-        return entry
-      end
+  local line, parent = 0, nil
 
-      index = index + 1
-      if entry.open == true then
-        local child = iter(entry.entries)
-        if child ~= nil then return child end
-      end
+  -- Check if current node is already at root entries
+  for index, entry in ipairs(M.Tree.entries) do
+    if node_path:match('^'..entry.match_path..'$') ~= nil then
+      line = index
     end
   end
 
-  if node.open == true then
+  if line > 0 then
+    parent = M.Tree
+  else
+    _, parent = iter(M.Tree.entries, true)
+    if parent ~= nil and #parent.entries > 1 then
+      line, _ = get_line_from_node(node)(parent.entries)
+    end
+
+    -- Ignore parent line count
+    line = line - 1
+  end
+
+  local index = line + direction
+  if index < 1 then
+    index = 1
+  elseif index > #parent.entries then
+    index = #parent.entries
+  end
+  local target_node = parent.entries[index]
+
+  line, _ = get_line_from_node(target_node)(M.Tree.entries, true)
+  api.nvim_win_set_cursor(M.Tree.winnr(), {line, 0})
+  renderer.draw(M.Tree, true)
+end
+
+function M.close_node(node)
+  M.parent_node(node, true)
+end
+
+function M.parent_node(node, should_close)
+  if node.name == '..' then return end
+  should_close = should_close or false
+
+  local iter = get_line_from_node(node, true)
+  if node.open == true and should_close then
     node.open = false
   else
-    local parent = iter(M.Tree.entries)
+    local line, parent = iter(M.Tree.entries, true)
     if parent == nil then
-      index = 1
-    else
+      line = 1
+    elseif should_close then
       parent.open = false
     end
-    api.nvim_win_set_cursor(M.Tree.winnr(), {index, 0})
+    api.nvim_win_set_cursor(M.Tree.winnr(), {line, 0})
   end
   renderer.draw(M.Tree, true)
 end
@@ -358,16 +422,35 @@ function M.win_open()
   return M.Tree.winnr() ~= nil
 end
 
-function M.win_focus(winnr)
+function M.win_focus(winnr, open_if_closed)
   local wnr = winnr or M.Tree.winnr()
 
   if vim.api.nvim_win_get_tabpage(wnr) ~= vim.api.nvim_win_get_tabpage(0) then
     M.close()
     M.open()
     wnr = M.Tree.winnr()
+  elseif open_if_closed and not M.win_open() then
+    M.open()
   end
 
   api.nvim_set_current_win(wnr)
+end
+
+function M.buf_exists()
+  local status, exists = pcall(function ()
+    return (
+      M.Tree.bufnr ~= nil
+      and vim.api.nvim_buf_is_valid(M.Tree.bufnr)
+      and vim.api.nvim_buf_get_var(M.Tree.bufnr, "nvim_tree_buffer_ready") == 1
+      and vim.fn.bufname(M.Tree.bufnr) == M.Tree.buf_name
+    )
+  end)
+
+  if not status then
+    return false
+  else
+    return exists
+  end
 end
 
 function M.toggle_ignored()
